@@ -181,9 +181,6 @@ cryptocurrency that operates with the BIP32 standard.
 But Hermit also ships with a `sign-bitcoin` command that will sign
 Bitcoin (BTC) transactions.
 
-You can extend Hermit for other cryptocurrencies if you need; see the
-"Plugins" section below.
-
 Usage
 -----
 
@@ -299,14 +296,17 @@ this section.
 Hermit ships with a full [pytest] suite.  Run it as follows:
 
 ```
+$ make clean
+$ make venv
 $ source environment.sh
+$ make dependencies
 $ make test
 $ make lint
 ```
 
 Hermit has been tested on the following platforms:
 
-* OS X High Sierra 10.13.6
+* macOS Big Sur 11.3
 * Linux Ubuntu 18.04
 * Linux Slax 9.6.4
 
@@ -320,111 +320,12 @@ see and test all functionality.
 #### Integrating
 
 Hermit needs an external, online wallet application in order to work.
-This application has a few ways it may need to integrate with
-Hermit:
-
-* Read a public key displayed by Hermit
-
-* Generate a signature request for Hermit (see [examples/signature_requests/bitcoin_testnet.json](examples/signature_requests/bitcoin_testnet.json))
-
-* Read a signature displayed by Hermit (see [examples/signatures/bitcoin.json](examples/signatures/bitcoin.json))
-
-In all cases, Hermit uses the same scheme to encode/decode data into
-QR codes.  The pipelines look like this:
-
-  * To create a QR code from a `string`: utf-8 encode -> gzip-compress -> Base32 encode
-  * To parse a QR code `string`: Base32 decode -> gzip-decompress -> utf-8 decode
-
-The `string` data may sometimes itself be JSON.
-
-#### Plugins
-
-Hermit allows you to write plugins to extend its functionality.  This
-is chiefly so that you can write `Signer` classes for cryptocurrencies
-beyond Bitcoin (BTC).
-
-The default directory for plugin code is `/var/lib/hermit`.  Any
-`*.py` files in this directory will be loaded by Hermit when it boots
-(though you can customize this directory; see the "Configuration"
-section above).
-
-An example signer class is below
-
-```python
-#
-# Example signer class for a putative "MyCoin" currency.
-#
-# Put in /var/lib/hermit/mycoin_signer.py
-#
-
-from hermit.errors import InvalidSignatureRequest
-from hermit.signer.base import Signer
-from hermit.ui.wallet import wallet_command
-import hermit.ui.state as state
-
-# Some library for MyCoin
-from mycoin_lib import sign_mycoin_transaction
-
-class MyCoinSigner(Signer):
-    """Signs MyCoin transactions"""
-
-    def validate_request(self) -> None:
-        """Validates a MyCoin signature request"""
-	# This is built into the Signer class
-	self.validate_bip32_path(request.get('bip32_path'))
-
-	# this isn't great validation code, but you get the point...
-	if 'input' not in self.request:
-	    raise InvalidSignatureRequest("The param 'input' is required.")
-	if 'output' not in self.request:
-	    raise InvalidSignatureRequest("The param 'output' is required.")
-	if 'amount' not in self.request:
-	    raise InvalidSignatureRequest("The param 'amount' is required.")
-
-	self.bip32_path = self.request['bip32_path']
-	self.input = self.request[input]
-	self.output = self.request['output']
-	self.amount = self.request['amount']
-
-    def display_request(self) -> None:
-        """Displays the transaction to be signed"""
-        print("""
-        INPUT:  {}
-	OUTPUT: {}
-	AMOUNT: {}
-        SIGNING AS: {}
-	""".format(self.input,
-                 self.output,
-                 self.amount,
-	           self.bip32_path))
-
-    def create_signature(self) -> None:
-        """Signs a transaction"""
-	keys = self.generate_child_keys(self.bip32_path)
-	# Here is the magic of MyCoin...
-        self.signature = sign_mycoin_transaction(self.input, self.output, self.amount, keys)
-
-@wallet_command('sign-mycoin')
-def sign_mycoin():
-    """usage:  sign-mycoin
-
-  Create a signature for a MyCoin transaction.
-
-  Hermit will open a QR code reader window and wait for you to scan an
-  Ethereum transaction signature request.
-
-  Once scanned, the details of the signature request will be displayed
-  on screen and you will be prompted whether or not you want to sign
-  the transaction.
-
-  If you agree, Hermit will open a window displaying the signature as
-  a QR code.
-
-  Creating a signature requires unlocking the wallet.
-
-    """
-    MyCoinSigner(state.Wallet, state.Session).sign()
-```
+This application uses output descriptors/PSBT, which is now the standard for Coordinators.
+You can Coordinate this using:
+* Specter-Desktop
+* Sparrow
+* Fully Noded
+* More coming soon
 
 #### Contributing to Hermit
 
@@ -441,11 +342,12 @@ $ make test
 $ make lint
 ```
 
-(Linting is done with [flake8] and [mypy].)
+(Linting is done with [flake8], [mypy], and [black].)
 
 [pytest]: https://docs.pytest.org/en/latest/
 [flake8]: http://flake8.pycqa.org/en/latest/
 [mypy]: http://mypy-lang.org/
+[black]: https://black.readthedocs.io/en/stable/
 [bip32]: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 
 ## Key rotation
@@ -455,8 +357,3 @@ copies of the passphrase to decrypt the share. The share only exists on the
 Hermit device, and it's encrypted. Rotating out a member is achieved by using
 one of the other team members to decrypt the share and then re-encrypting the
 share with a new passphrase, thus excluding the previous user.
-
-## TODO
-
-* Validate wallet public keys/signatures against the provided redeem script in the bitcoin signer.
-* Re-do QR-code protocol details once a [standard emerges](https://www.blockchaincommons.com)
