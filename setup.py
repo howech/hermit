@@ -20,7 +20,7 @@ with open(__path("hermit/VERSION")) as version_file:
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-requirementPath = __path("requirements.frozen.txt")
+requirementPath = __path("requirements.txt")
 install_requires = []
 if os.path.isfile(requirementPath):
     with open(requirementPath) as f:
