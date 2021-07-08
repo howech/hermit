@@ -27,7 +27,7 @@ mnemonic==0.18
 more-itertools==7.2.0
 mypy==0.701
 mypy-extensions==0.4.1
-numpy==1.17.0
+numpy==1.19.3
 opencv-python==4.5.2.54
 packaging==19.1
 pbkdf2==1.3
