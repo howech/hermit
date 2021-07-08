@@ -1,5 +1,5 @@
 from buidl.hd import (
-    generate_wshsortedmulti_address,
+#    generate_wshsortedmulti_address,
     HDPrivateKey,
     HDPublicKey,
     parse_wshsortedmulti,
@@ -153,11 +153,12 @@ class HDWallet(object):
         offset: int = 0,
         limit: int = 10,
     ):
-        return generate_wshsortedmulti_address(
-            quorum_m=self.quorum_m,
-            key_records=self.pubkey_records,
-            is_testnet=testnet,
-            is_change=is_change,
-            offset=offset,
-            limit=limit,
-        )
+        return None
+        # return generate_wshsortedmulti_address(
+            # quorum_m=self.quorum_m,
+            # key_records=self.pubkey_records,
+            # is_testnet=testnet,
+            # is_change=is_change,
+            # offset=offset,
+            # limit=limit,
+        # )
